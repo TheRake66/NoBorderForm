@@ -18,22 +18,23 @@ namespace NoBorderForm
     static class Librairies
     {
         // ====================================================================
-        public enum formCustomButton : int
+        public enum formCustomButton
         {
-            MinimizeCroix = 0,
-            MaximizeCroix = 1,
-            OnlyCroix = 2,
-            Alls = 3
+            MinimizeCroix,
+            MaximizeCroix,
+            OnlyCroix,
+            Alls
         }
         public static Control formCustomInit(
-            Form uneForm, 
+            Form uneForm,
             Color backColor,
-            Color couleurActive, 
-            Color couleurInactive, 
+            Color couleurActive,
+            Color couleurInactive,
             Color couleurButtons,
             bool paintBar,
             Control forButton,
             formCustomButton desButtons,
+            bool gripSize = false,
             int borderVisible = 1,
             int borderSize = 10,
             float fontSize = 12F,
@@ -58,21 +59,33 @@ namespace NoBorderForm
             border.BackColor = couleurActive;
             border.Padding = new Padding(bord);
             uneForm.Controls.Add(border);
-            uneForm.Activated += new EventHandler((e, s) => 
-            { 
+            uneForm.Activated += new EventHandler((e, s) =>
+            {
                 border.BackColor = couleurActive;
-                if (paintBar) forButton.BackColor = couleurActive; 
+                if (paintBar) forButton.BackColor = couleurActive;
             });
-            uneForm.Deactivate += new EventHandler((e, s) => 
-            { 
+            uneForm.Deactivate += new EventHandler((e, s) =>
+            {
                 border.BackColor = couleurInactive;
-                if (paintBar) forButton.BackColor = couleurInactive; 
+                if (paintBar) forButton.BackColor = couleurInactive;
             });
 
             // Container
             Panel cont = new Panel();
             cont.Dock = DockStyle.Fill;
             cont.BackColor = backColor;
+            if (gripSize)
+            {
+                cont.Paint += new PaintEventHandler((a, b) =>
+                {
+                    int gripsize = 15;
+                    ControlPaint.DrawSizeGrip(
+                        b.Graphics,
+                        Color.Transparent,
+                        cont.Width - gripsize, cont.Height - gripsize,
+                        gripsize - 2, gripsize - 2);
+                });
+            }
             border.Controls.Add(cont);
 
             // Button croix
@@ -83,6 +96,7 @@ namespace NoBorderForm
             cross.Text = "r";
             cross.ForeColor = couleurButtons;
             cross.FlatStyle = FlatStyle.Flat;
+            cross.BackColor = Color.Transparent;
             cross.FlatAppearance.BorderSize = 0;
             cross.Location = new Point(forButton.Right - invisible - buttonSizeW, 0);
             cross.Click += new EventHandler((e, s) => { uneForm.Close(); });
@@ -99,6 +113,7 @@ namespace NoBorderForm
                 maximize.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 maximize.Text = "1";
                 maximize.ForeColor = couleurButtons;
+                maximize.BackColor = Color.Transparent;
                 maximize.FlatStyle = FlatStyle.Flat;
                 maximize.FlatAppearance.BorderSize = 0;
                 maximize.Location = new Point(forButton.Right - invisible - buttonSizeW * 2, 0);
@@ -119,7 +134,6 @@ namespace NoBorderForm
                         maximize.FindForm().WindowState = FormWindowState.Maximized;
                     }
                 });
-
                 uneForm.SizeChanged += new EventHandler((e, s) =>
                 {
                     if (maximize.FindForm().WindowState == FormWindowState.Maximized)
@@ -135,12 +149,12 @@ namespace NoBorderForm
                         maximize.Text = "1";
                     }
                 });
-
                 // Double click sur la barre
                 forButton.DoubleClick += new EventHandler((e, s) =>
-                { 
+                {
                     if (uneForm.WindowState == FormWindowState.Maximized) uneForm.WindowState = FormWindowState.Normal;
                     else uneForm.WindowState = FormWindowState.Maximized;
+                    uneForm.Refresh();
                 });
                 forButton.Controls.Add(maximize);
             }
@@ -153,10 +167,11 @@ namespace NoBorderForm
                 minimize.Size = new Size(buttonSizeW, buttonSizeH);
                 minimize.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 minimize.Text = "0";
+                minimize.BackColor = Color.Transparent;
                 minimize.ForeColor = couleurButtons;
                 minimize.FlatStyle = FlatStyle.Flat;
                 minimize.FlatAppearance.BorderSize = 0;
-                minimize.Location = new Point(forButton.Right - invisible - (desButtons == formCustomButton.Alls ? buttonSizeW * 3: buttonSizeW * 2), 0);
+                minimize.Location = new Point(forButton.Right - invisible - (desButtons == formCustomButton.Alls ? buttonSizeW * 3 : buttonSizeW * 2), 0);
                 minimize.Click += new EventHandler((e, s) =>
                 {
                     uneForm.WindowState = FormWindowState.Minimized;
@@ -167,9 +182,12 @@ namespace NoBorderForm
             // Ajout des controls à la sous form
             for (int i = 0; i < uneForm.Controls.Count; i++)
             {
-                if (uneForm.Controls[i] != cont && uneForm.Controls[i] != border)
+                Control con = uneForm.Controls[i];
+                if (con != cont && con != border)
                 {
-                    uneForm.Controls[i].Parent = cont;
+                    con.Parent = cont;
+                    int moins = borderSize - borderVisible;
+                    con.Location = new Point(con.Location.X - moins, con.Location.Y - moins); // Le padding change le x et y
                     i--; // PAS DE FOREACH --> a chaque setparent le controls.count diminu
                 }
             }
@@ -248,6 +266,7 @@ namespace NoBorderForm
                 else if (Cursor.Position.Y == miny && (desButtons == formCustomButton.Alls || desButtons == formCustomButton.MaximizeCroix))
                 {
                     uneForm.WindowState = FormWindowState.Maximized;
+                    uneForm.Refresh();
                 }
                 // Bas
                 else if (Cursor.Position.Y == maxy && (desButtons == formCustomButton.Alls || desButtons == formCustomButton.MinimizeCroix))
@@ -345,17 +364,18 @@ namespace NoBorderForm
                     }
 
 
-                    if ((uneForm.Height == 2 ||
-                        uneForm.Height == uneForm.MinimumSize.Height ||
-                        uneForm.Height == uneForm.MaximumSize.Height) && newh < uneForm.Height)
+
+                    if (newh < 2 ||
+                        newh < uneForm.MinimumSize.Height ||
+                        newh < uneForm.MaximumSize.Height)
                     {
                         newh = uneForm.Height;
                         newy = uneForm.Location.Y;
                     }
-                    
-                    if ((uneForm.Width == 2 ||
-                        uneForm.Width == uneForm.MinimumSize.Width ||
-                        uneForm.Width == uneForm.MaximumSize.Width) && neww < uneForm.Width)
+
+                    if (neww < 2 ||
+                        neww < uneForm.MinimumSize.Width ||
+                        neww < uneForm.MaximumSize.Width)
                     {
                         neww = uneForm.Width;
                         newx = uneForm.Location.X;
@@ -363,6 +383,7 @@ namespace NoBorderForm
 
                     uneForm.Location = new Point(newx, newy);
                     uneForm.Size = new Size(neww, newh);
+                    
                     uneForm.Refresh();
                 }
                 else
