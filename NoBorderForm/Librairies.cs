@@ -25,7 +25,7 @@ namespace NoBorderForm
             OnlyCroix = 2,
             Alls = 3
         }
-        public static IntPtr formCustomInit(
+        public static Control formCustomInit(
             Form uneForm, 
             Color backColor,
             Color couleurActive, 
@@ -33,12 +33,17 @@ namespace NoBorderForm
             Color couleurButtons,
             bool paintBar,
             Control forButton,
-            formCustomButton desButtons
+            formCustomButton desButtons,
+            int borderVisible = 1,
+            int borderSize = 10,
+            float fontSize = 12F,
+            int buttonSizeW = 50,
+            int buttonSizeH = 30
             )
         {
             // -------------------------------------
-            int invisible = 10;
-            int bord = 1;
+            int invisible = borderSize;
+            int bord = borderVisible;
 
 
             // Modifi la form
@@ -72,14 +77,14 @@ namespace NoBorderForm
 
             // Button croix
             Button cross = new Button();
-            cross.Font = new Font("Marlett", 12F);
-            cross.Size = new Size(50, 30);
+            cross.Font = new Font("Marlett", fontSize);
+            cross.Size = new Size(buttonSizeW, buttonSizeH);
             cross.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             cross.Text = "r";
             cross.ForeColor = couleurButtons;
             cross.FlatStyle = FlatStyle.Flat;
             cross.FlatAppearance.BorderSize = 0;
-            cross.Location = new Point(forButton.Right - invisible - 50, 0);
+            cross.Location = new Point(forButton.Right - invisible - buttonSizeW, 0);
             cross.Click += new EventHandler((e, s) => { uneForm.Close(); });
             cross.MouseEnter += new EventHandler((e, s) => { cross.BackColor = Color.FromArgb(232, 17, 35); });
             cross.MouseLeave += new EventHandler((e, s) => { cross.BackColor = Color.Transparent; });
@@ -89,14 +94,14 @@ namespace NoBorderForm
             if (desButtons == formCustomButton.Alls || desButtons == formCustomButton.MaximizeCroix)
             {
                 Button maximize = new Button();
-                maximize.Font = new Font("Marlett", 12F);
-                maximize.Size = new Size(50, 30);
+                maximize.Font = new Font("Marlett", fontSize);
+                maximize.Size = new Size(buttonSizeW, buttonSizeH);
                 maximize.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 maximize.Text = "1";
                 maximize.ForeColor = couleurButtons;
                 maximize.FlatStyle = FlatStyle.Flat;
                 maximize.FlatAppearance.BorderSize = 0;
-                maximize.Location = new Point(forButton.Right - invisible - 100, 0);
+                maximize.Location = new Point(forButton.Right - invisible - buttonSizeW * 2, 0);
                 maximize.Click += new EventHandler((e, s) =>
                 {
                     if (maximize.FindForm().WindowState == FormWindowState.Maximized)
@@ -144,14 +149,14 @@ namespace NoBorderForm
             if (desButtons == formCustomButton.Alls || desButtons == formCustomButton.MinimizeCroix)
             {
                 Button minimize = new Button();
-                minimize.Font = new Font("Marlett", 12F);
-                minimize.Size = new Size(50, 30);
+                minimize.Font = new Font("Marlett", fontSize);
+                minimize.Size = new Size(buttonSizeW, buttonSizeH);
                 minimize.Anchor = AnchorStyles.Top | AnchorStyles.Right;
                 minimize.Text = "0";
                 minimize.ForeColor = couleurButtons;
                 minimize.FlatStyle = FlatStyle.Flat;
                 minimize.FlatAppearance.BorderSize = 0;
-                minimize.Location = new Point(forButton.Right - invisible - (desButtons == formCustomButton.Alls ? 150:100), 0);
+                minimize.Location = new Point(forButton.Right - invisible - (desButtons == formCustomButton.Alls ? buttonSizeW * 3: buttonSizeW * 2), 0);
                 minimize.Click += new EventHandler((e, s) =>
                 {
                     uneForm.WindowState = FormWindowState.Minimized;
@@ -176,11 +181,13 @@ namespace NoBorderForm
             forButton.MouseDown += new MouseEventHandler((s, e) =>
             {
                 IfIsMoveForm = true;
+                forButton.Cursor = Cursors.SizeAll;
                 MoveFormStart = new Point(e.X, e.Y);
             });
             forButton.MouseUp += new MouseEventHandler((s, e) =>
             {
                 IfIsMoveForm = false;
+                forButton.Cursor = Cursors.Default;
 
                 // Gère la fenetre dans les coins
                 int minx = Screen.FromPoint(Cursor.Position).Bounds.X;
@@ -411,7 +418,8 @@ namespace NoBorderForm
                 }
             });
 
-            return cont.Handle;
+            // Retourne le container à utiliser à la place de this
+            return cont;
             // -------------------------------------
         }
         // ====================================================================
