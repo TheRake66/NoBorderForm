@@ -414,12 +414,6 @@ namespace NoBorderForm
             return cont.Handle;
             // -------------------------------------
         }
-        private static void formCustomResizeStop()
-        {
-            // -------------------------------------
-            //this.Cursor = Cursors.Default;
-            // -------------------------------------
-        }
         // ====================================================================
     }
 }
